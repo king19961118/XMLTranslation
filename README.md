@@ -1,0 +1,2 @@
+# XMLTranslation
+多个xml文件转成一个excel文件，修改excel文件内容数据，再生成多个xml
