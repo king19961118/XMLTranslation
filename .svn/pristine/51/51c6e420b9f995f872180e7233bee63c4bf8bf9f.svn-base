@@ -1,0 +1,375 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.IO;
+using System.Xml;
+using System.Xml.Linq;
+using System.Windows.Forms;
+
+namespace XMLTranslation
+{
+    /// <summary>
+    /// 将xml文件的操作
+    /// </summary>
+    class XMLOperate
+    {
+        /// <summary>
+        /// 把xml文件读取成一个object对象
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        public XMLObject XMLFiletoObject(String filePath, String fileName)
+        {
+            XMLObject xmlObject = new XMLObject();
+            string text = string.Empty;
+            try
+            {
+                #region 修改特殊字符（）
+                using (FileStream fs = new FileStream(@"" + filePath + "\\" + fileName, FileMode.Open, FileAccess.Read))
+                {
+                    using (StreamReader sr = new StreamReader(fs, Encoding.GetEncoding("gb2312")))
+                    {
+                        text = sr.ReadToEnd();
+                        text = text.Replace("要素（实体）类型名称", "要素实体类型名称");
+                    }
+                }
+                using (FileStream fs = new FileStream(@"" + filePath + "\\" + fileName, FileMode.Create, FileAccess.Write))
+                {
+                    using (StreamWriter sw = new StreamWriter(fs, Encoding.GetEncoding("gb2312")))
+                    {
+                        sw.Write(text);
+                    }
+                }
+                #endregion
+
+                xmlObject.fileName = fileName;
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(@"" + filePath + "\\" + fileName);   //一个xml文件
+
+                #region 标识信息
+                XmlNodeList bs_data = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/标识信息/MD_标识");
+                foreach (XmlNode bs_d in bs_data)
+                {
+                    //第一层数据
+                    xmlObject.BS_YZ = bs_d.SelectSingleNode("语种").InnerText;
+                    xmlObject.BS_ZY = bs_d.SelectSingleNode("摘要").InnerText;
+                    xmlObject.BS_XZ = bs_d.SelectSingleNode("现状").InnerText;
+                    xmlObject.BS_TDLYFLXX = bs_d.SelectSingleNode("土地利用分类系统").InnerText;
+                    xmlObject.BS_BSFS = bs_d.SelectSingleNode("表示方式").InnerText;
+                    xmlObject.BS_KJFBL = bs_d.SelectSingleNode("空间分辨率").InnerText;
+                    xmlObject.BS_LB = bs_d.SelectSingleNode("类别").InnerText;
+                    //其他多层数据
+                    //数据集引用
+                    XmlNodeList bs_other = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/标识信息/MD_标识/数据集引用/CI_引用");
+                    xmlObject.BS_MC = bs_other[0].SelectSingleNode("名称").InnerText;
+                    xmlObject.BS_RQ = bs_other[0].SelectSingleNode("日期").InnerText;
+                    xmlObject.BS_BB = bs_other[0].SelectSingleNode("版本").InnerText;
+
+                    //地理范围
+                    bs_other = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/标识信息/MD_标识/地理范围/EX_地理坐标范围");
+                    xmlObject.BS_XBJD = bs_other[0].SelectSingleNode("西边经度").InnerText;
+                    xmlObject.BS_DBJD = bs_other[0].SelectSingleNode("东边经度").InnerText;
+                    xmlObject.BS_NBWD = bs_other[0].SelectSingleNode("南边纬度").InnerText;
+                    xmlObject.BS_BBWD = bs_other[0].SelectSingleNode("北边纬度").InnerText;
+
+                    //地理描述
+                    bs_other = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/标识信息/MD_标识/地理描述/SI_地理描述");
+                    xmlObject.BS_DLBSF = bs_other[0].SelectSingleNode("地理标识符").InnerText;
+
+                    //时间范围
+                    bs_other = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/标识信息/MD_标识/时间范围/EX_时间范围/范围/TM_时间段");
+                    xmlObject.BS_QSSJ = bs_other[0].SelectSingleNode("起始时间").InnerText;
+                    xmlObject.BS_ZZSJ = bs_other[0].SelectSingleNode("终止时间").InnerText;
+
+                    //数据集联系信息
+                    bs_other = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/标识信息/MD_标识/数据集联系信息/CI_负责单位");
+                    xmlObject.BS_FZDWMC = bs_other[0].SelectSingleNode("负责单位名称").InnerText;
+                    xmlObject.BS_LXR = bs_other[0].SelectSingleNode("联系人").InnerText;
+                    xmlObject.BS_ZZ = bs_other[0].SelectSingleNode("职责").InnerText;
+                    xmlObject.BS_DH = bs_other[0].SelectSingleNode("联系信息").SelectSingleNode("电话").InnerText;
+                    xmlObject.BS_CZ = bs_other[0].SelectSingleNode("联系信息").SelectSingleNode("传真").InnerText;
+                    xmlObject.BS_TXDZ = bs_other[0].SelectSingleNode("联系信息").SelectSingleNode("通信地址").InnerText;
+                    xmlObject.BS_YZBM = bs_other[0].SelectSingleNode("联系信息").SelectSingleNode("邮政编码").InnerText;
+                    xmlObject.BS_DZXXDZ = bs_other[0].SelectSingleNode("联系信息").SelectSingleNode("电子信箱地址").InnerText;
+                    xmlObject.BS_WZ = bs_other[0].SelectSingleNode("联系信息").SelectSingleNode("网址").InnerText;
+
+                    //数据集限制
+                    bs_other = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/标识信息/MD_标识/数据集限制/MD_数据集限制");
+                    xmlObject.BS_SYXZDM = bs_other[0].SelectSingleNode("使用限制代码").InnerText;
+                    xmlObject.BS_AQDJDM = bs_other[0].SelectSingleNode("MD_安全限制").SelectSingleNode("安全等级代码").InnerText;
+                    //数据集格式
+                    bs_other = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/标识信息/MD_标识/数据集格式/MD_格式");
+                    xmlObject.BS_MC2 = bs_other[0].SelectSingleNode("名称").InnerText;
+                    xmlObject.BS_BB2 = bs_other[0].SelectSingleNode("版本").InnerText;
+                    xmlObject.BS_SJKGLRJMC = bs_other[0].SelectSingleNode("数据库管理软件名称").InnerText;
+                }
+                #endregion
+
+                #region 数据质量信息
+                bs_data = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/数据质量信息");
+                xmlObject.SJ_MS = bs_data[0].SelectSingleNode("概述").InnerText;
+                xmlObject.SJ_SJZ = bs_data[0].SelectSingleNode("数据志").InnerText;
+                #endregion
+
+                #region 空间参照系统信息
+                bs_data = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/空间参照系统信息/RS_参照系统/SC_大地坐标参照系统");
+                xmlObject.KJ_DDZBCZXTMC = bs_data[0].SelectSingleNode("大地坐标参照系统名称").InnerText;
+                xmlObject.KJ_ZBXTLX = bs_data[0].SelectSingleNode("SC_大地坐标系统").SelectSingleNode("坐标系统类型").InnerText;
+                xmlObject.KJ_ZBXTMC = bs_data[0].SelectSingleNode("SC_大地坐标系统").SelectSingleNode("坐标系统名称").InnerText;
+                xmlObject.KJ_TYZBXTCS = bs_data[0].SelectSingleNode("SC_大地坐标系统").SelectSingleNode("投影坐标系统参数").InnerText;
+                #endregion
+
+                #region 内容信息
+                bs_data = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/内容信息/MD_内容描述");
+                xmlObject.NL_TCMC = bs_data[0].SelectSingleNode("图层名称").InnerText;
+                xmlObject.NL_YSSTLXMC = bs_data[0].SelectSingleNode("要素实体类型名称").InnerText;
+                xmlObject.NL_SXLB = bs_data[0].SelectSingleNode("属性列表").InnerText;
+                #endregion
+
+                #region 分发信息
+                bs_data = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/分发信息/MD_分发");
+                xmlObject.FF_ZXLJ = bs_data[0].SelectSingleNode("数字传输选项").SelectSingleNode("在线连接").InnerText;
+                bs_data = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/分发信息/MD_分发/分发者/MD_分发者/分发者联系信息/CI_负责单位");
+                xmlObject.FF_FZDWRMC = bs_data[0].SelectSingleNode("负责单位名称").InnerText;
+                xmlObject.FF_LXR = bs_data[0].SelectSingleNode("联系人").InnerText;
+                xmlObject.FF_ZZ1 = bs_data[0].SelectSingleNode("职责").InnerText;
+                xmlObject.FF_ZZ2 = bs_data[0].SelectSingleNode("职责").NextSibling.InnerText;
+                xmlObject.FF_ZZ3 = "'"+bs_data[0].SelectSingleNode("职责").NextSibling.NextSibling.InnerText;//转译
+                bs_data = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/分发信息/MD_分发/分发者/MD_分发者/分发者联系信息/CI_负责单位/联系信息/CI_联系");
+                xmlObject.FF_DH = bs_data[0].SelectSingleNode("电话").InnerText;
+                xmlObject.FF_CZ = bs_data[0].SelectSingleNode("传真").InnerText;
+                xmlObject.FF_TXDZ = bs_data[0].SelectSingleNode("通信地址").InnerText;
+                xmlObject.FF_YZBM = bs_data[0].SelectSingleNode("邮政编码").InnerText;
+                xmlObject.FF_DZXXDZ = bs_data[0].SelectSingleNode("电子信箱地址").InnerText;
+                xmlObject.FF_WZ = bs_data[0].SelectSingleNode("网址").InnerText;
+                #endregion
+
+                #region MD_元数据
+                bs_data = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/MD_元数据");
+                xmlObject.MD_RQ = bs_data[0].SelectSingleNode("日期").InnerText;
+                bs_data = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/MD_元数据/联系/CI负责单位");
+                xmlObject.MD_FZDWMC = bs_data[0].SelectSingleNode("负责单位名称").InnerText;
+                xmlObject.MD_LXR = bs_data[0].SelectSingleNode("联系人").InnerText;
+                xmlObject.MD_ZZ = bs_data[0].SelectSingleNode("职责").InnerText;
+                bs_data = xmlDoc.SelectNodes("/福建省厦门市集美区基本农田永久划定成果元数据/MD_元数据/联系/CI_联系/联系信息");
+                xmlObject.MD_DH = bs_data[0].SelectSingleNode("电话").InnerText;
+                xmlObject.MD_CZ = bs_data[0].SelectSingleNode("传真").InnerText;
+                xmlObject.MD_TXDZ = bs_data[0].SelectSingleNode("通信地址").InnerText;
+                xmlObject.MD_YZBM = bs_data[0].SelectSingleNode("邮政编码").InnerText;
+                xmlObject.MD_DZXXDZ = bs_data[0].SelectSingleNode("电子信箱地址").InnerText;
+                xmlObject.MD_WZ = bs_data[0].SelectSingleNode("网址").InnerText;
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                ErrorLog.RecordExceptionToFile(ex, filePath, fileName);
+                MessageBox.Show("xml文件有异常，请查看错误日志ErrorLog", "确定");
+            }
+            finally
+            {
+                #region //将特殊字符还原
+
+                using (FileStream fs = new FileStream(@"" + filePath + "\\" + fileName, FileMode.Open, FileAccess.Read))
+                {
+                    using (StreamReader sr = new StreamReader(fs, Encoding.GetEncoding("gb2312")))
+                    {
+                        text = sr.ReadToEnd();
+                        text = text.Replace("要素实体类型名称", "要素（实体）类型名称");
+                    }
+                }
+                using (FileStream fs = new FileStream(@"" + filePath + "\\" + fileName, FileMode.Create, FileAccess.Write))
+                {
+                    using (StreamWriter sw = new StreamWriter(fs, Encoding.GetEncoding("gb2312")))
+                    {
+                        sw.Write(text);
+                    }
+                }
+                #endregion
+            }
+            return xmlObject;
+        }
+
+        /// <summary>
+        /// 把object对象生产一个xml文件
+        /// </summary>
+        /// <param name="filePath">输出路径</param>
+        /// <param name="xmlObject">数据内容</param>
+        /// <returns></returns>
+        public bool ObjectToXMLFile(String filePath, XMLObject xmlObject)
+        {
+            var sb = new StringBuilder();
+            #region 文件
+            sb.Append("<?xml version='1.0' encoding='gb2312'?>");
+            sb.Append("\n<福建省厦门市集美区基本农田永久划定成果元数据 xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>");
+            sb.Append("\n\t<标识信息>");
+            sb.Append("\n\t\t<MD_标识>");
+            sb.Append("\n\t\t\t<数据集引用>");
+            sb.Append("\n\t\t\t\t<CI_引用>");
+            sb.Append("\n\t\t\t\t\t<名称>" + xmlObject.BS_MC + "</名称>");
+            sb.Append("\n\t\t\t\t\t<日期>" + xmlObject.BS_RQ + "</日期>");
+            sb.Append("\n\t\t\t\t\t<版本>" + xmlObject.BS_BB + "</版本>");
+            sb.Append("\n\t\t\t\t</CI_引用>");
+            sb.Append("\n\t\t\t</数据集引用>");
+            sb.Append("\n\t\t\t<语种>" + xmlObject.BS_YZ + "</语种>");
+            sb.Append("\n\t\t\t<摘要>" + xmlObject.BS_ZY + "</摘要>");
+            sb.Append("\n\t\t\t<现状>" + xmlObject.BS_XZ + "</现状>");
+            sb.Append("\n\t\t\t<土地利用分类系统>" + xmlObject.BS_TDLYFLXX + "</土地利用分类系统>");
+            sb.Append("\n\t\t\t<地理范围>");
+            sb.Append("\n\t\t\t\t<EX_地理坐标范围>");
+            sb.Append("\n\t\t\t\t\t<西边经度>" + xmlObject.BS_XBJD + "</西边经度>");
+            sb.Append("\n\t\t\t\t\t<东边经度>" + xmlObject.BS_DBJD + "</东边经度>");
+            sb.Append("\n\t\t\t\t\t<南边纬度>" + xmlObject.BS_NBWD + "</南边纬度>");
+            sb.Append("\n\t\t\t\t\t<北边纬度>" + xmlObject.BS_BBWD + "</北边纬度>");
+            sb.Append("\n\t\t\t\t</EX_地理坐标范围>");
+            sb.Append("\n\t\t\t</地理范围>");
+            sb.Append("\n\t\t\t<地理描述>");
+            sb.Append("\n\t\t\t\t<SI_地理描述>");
+            sb.Append("\n\t\t\t\t\t<地理标识符>" + xmlObject.BS_DLBSF + "</地理标识符>");
+            sb.Append("\n\t\t\t\t</SI_地理描述>");
+            sb.Append("\n\t\t\t</地理描述>");
+            sb.Append("\n\t\t\t<时间范围>");
+            sb.Append("\n\t\t\t\t<EX_时间范围>");
+            sb.Append("\n\t\t\t\t\t<范围>");
+            sb.Append("\n\t\t\t\t\t\t<TM_时间段>");
+            sb.Append("\n\t\t\t\t\t\t\t<起始时间>" + xmlObject.BS_QSSJ + "</起始时间>");
+            sb.Append("\n\t\t\t\t\t\t\t<终止时间>" + xmlObject.BS_ZZSJ + "</终止时间>");
+            sb.Append("\n\t\t\t\t\t\t</TM_时间段>");
+            sb.Append("\n\t\t\t\t\t</范围>");
+            sb.Append("\n\t\t\t\t</EX_时间范围>");
+            sb.Append("\n\t\t\t</时间范围>");
+            sb.Append("\n\t\t\t<表示方式>" + xmlObject.BS_BSFS + "</表示方式>");
+            sb.Append("\n\t\t\t<空间分辨率>" + xmlObject.BS_KJFBL + "</空间分辨率>");
+            sb.Append("\n\t\t\t<类别>" + xmlObject.BS_LB + "</类别>");
+            sb.Append("\n\t\t\t<数据集联系信息>");
+            sb.Append("\n\t\t\t\t<CI_负责单位>");
+            sb.Append("\n\t\t\t\t\t<负责单位名称>" + xmlObject.BS_FZDWMC + "</负责单位名称>");
+            sb.Append("\n\t\t\t\t\t<联系人>" + xmlObject.BS_LXR + "</联系人>");
+            sb.Append("\n\t\t\t\t\t<职责>" + xmlObject.BS_ZZ + "</职责>");
+            sb.Append("\n\t\t\t\t\t<联系信息>");
+            sb.Append("\n\t\t\t\t\t\t<电话>" + xmlObject.BS_DH + "</电话>");
+            sb.Append("\n\t\t\t\t\t\t<传真>" + xmlObject.BS_CZ + "</传真>");
+            sb.Append("\n\t\t\t\t\t\t<通信地址>" + xmlObject.BS_TXDZ + "</通信地址>");
+            sb.Append("\n\t\t\t\t\t\t<邮政编码>" + xmlObject.BS_YZBM + "</邮政编码>");
+            sb.Append("\n\t\t\t\t\t\t<电子信箱地址>" + xmlObject.BS_DZXXDZ + "</电子信箱地址>");
+            sb.Append("\n\t\t\t\t\t\t<网址>" + xmlObject.BS_WZ + "</网址>");
+            sb.Append("\n\t\t\t\t\t</联系信息>");
+            sb.Append("\n\t\t\t\t</CI_负责单位>");
+            sb.Append("\n\t\t\t</数据集联系信息>");
+            sb.Append("\n\t\t\t<静态浏览图信息>");
+            sb.Append("\n\t\t\t\t<MD_浏览图>");
+            sb.Append("\n\t\t\t\t\t<文件名称>" + xmlObject.BS_WJMC + "</文件名称>");
+            sb.Append("\n\t\t\t\t</MD_浏览图>");
+            sb.Append("\n\t\t\t</静态浏览图信息>");
+            sb.Append("\n\t\t\t<数据集限制>");
+            sb.Append("\n\t\t\t\t<MD_数据集限制>");
+            sb.Append("\n\t\t\t\t\t<使用限制代码>" + xmlObject.BS_SYXZDM + "</使用限制代码>");
+            sb.Append("\n\t\t\t\t\t<MD_安全限制>");
+            sb.Append("\n\t\t\t\t\t\t<安全等级代码>" + xmlObject.BS_AQDJDM + "</安全等级代码>");
+            sb.Append("\n\t\t\t\t\t</MD_安全限制>");
+            sb.Append("\n\t\t\t\t</MD_数据集限制>");
+            sb.Append("\n\t\t\t</数据集限制>");
+            sb.Append("\n\t\t\t<数据集格式>");
+            sb.Append("\n\t\t\t\t<MD_格式>");
+            sb.Append("\n\t\t\t\t\t<名称>" + xmlObject.BS_MC2 + "</名称>");
+            sb.Append("\n\t\t\t\t\t<版本>" + xmlObject.BS_BB2 + "</版本>");
+            sb.Append("\n\t\t\t\t\t<数据库管理软件名称>" + xmlObject.BS_SJKGLRJMC + "</数据库管理软件名称>");
+            sb.Append("\n\t\t\t\t</MD_格式>");
+            sb.Append("\n\t\t\t</数据集格式>");
+            sb.Append("\n\t\t</MD_标识>");
+            sb.Append("\n\t</标识信息>");
+
+            sb.Append("\n\t<数据质量信息>");
+            sb.Append("\n\t\t<概述>" + xmlObject.SJ_MS);
+            sb.Append("\n\t\t</概述>");
+            sb.Append("\n\t\t<数据志>" + xmlObject.SJ_SJZ + "</数据志>");
+            sb.Append("\n\t</数据质量信息>");
+
+            sb.Append("\n\t<空间参照系统信息>");
+            sb.Append("\n\t\t<RS_参照系统>");
+            sb.Append("\n\t\t\t<SC_大地坐标参照系统>");
+            sb.Append("\n\t\t\t\t<大地坐标参照系统名称>" + xmlObject.KJ_DDZBCZXTMC + "</大地坐标参照系统名称>");
+            sb.Append("\n\t\t\t\t<SC_大地坐标系统>");
+            sb.Append("\n\t\t\t\t\t<坐标系统类型>" + xmlObject.KJ_ZBXTLX + "</坐标系统类型>");
+            sb.Append("\n\t\t\t\t\t<坐标系统名称>" + xmlObject.KJ_ZBXTMC + "</坐标系统名称>");
+            sb.Append("\n\t\t\t\t\t<投影坐标系统参数>" + xmlObject.KJ_TYZBXTCS + "</投影坐标系统参数>");
+            sb.Append("\n\t\t\t\t</SC_大地坐标系统>");
+            sb.Append("\n\t\t\t</SC_大地坐标参照系统>");
+            sb.Append("\n\t\t</RS_参照系统>");
+            sb.Append("\n\t</空间参照系统信息>");
+
+            sb.Append("\n\t<内容信息>");
+            sb.Append("\n\t\t<MD_内容描述>");
+            sb.Append("\n\t\t\t<图层名称>" + xmlObject.NL_TCMC + "</图层名称>");
+            sb.Append("\n\t\t\t<要素（实体）类型名称>" + xmlObject.NL_YSSTLXMC + "</要素（实体）类型名称>");
+            sb.Append("\n\t\t\t<属性列表>" + xmlObject.NL_SXLB + "</属性列表>");
+            sb.Append("\n\t\t</MD_内容描述>");
+            sb.Append("\n\t</内容信息>");
+
+            sb.Append("\n\t<分发信息>");
+            sb.Append("\n\t\t<MD_分发>");
+            sb.Append("\n\t\t\t<数字传输选项>");
+            sb.Append("\n\t\t\t\t<在线连接>" + xmlObject.FF_ZXLJ + "</在线连接>");
+            sb.Append("\n\t\t\t</数字传输选项>");
+            sb.Append("\n\t\t\t<分发者>");
+            sb.Append("\n\t\t\t\t<MD_分发者>");
+            sb.Append("\n\t\t\t\t\t<分发者联系信息>");
+            sb.Append("\n\t\t\t\t\t\t<CI_负责单位>");
+            sb.Append("\n\t\t\t\t\t\t\t<负责单位名称>" + xmlObject.FF_FZDWRMC + "</负责单位名称>");
+            sb.Append("\n\t\t\t\t\t\t\t<联系人>" + xmlObject.FF_LXR + "</联系人>");
+            sb.Append("\n\t\t\t\t\t\t\t<职责>" + xmlObject.FF_ZZ1 + "</职责>");
+            sb.Append("\n\t\t\t\t\t\t\t<职责>" + xmlObject.FF_ZZ2 + "</职责>");
+            sb.Append("\n\t\t\t\t\t\t\t<职责>" + xmlObject.FF_ZZ3 + "</职责>");
+            sb.Append("\n\t\t\t\t\t\t\t<联系信息>");
+            sb.Append("\n\t\t\t\t\t\t\t\t<CI_联系>");
+            sb.Append("\n\t\t\t\t\t\t\t\t\t<电话>" + xmlObject.FF_DH + "</电话>");
+            sb.Append("\n\t\t\t\t\t\t\t\t\t<传真>" + xmlObject.FF_CZ + "</传真>");
+            sb.Append("\n\t\t\t\t\t\t\t\t\t<通信地址>" + xmlObject.FF_TXDZ + "</通信地址>");
+            sb.Append("\n\t\t\t\t\t\t\t\t\t<邮政编码>" + xmlObject.FF_YZBM + "</邮政编码>");
+            sb.Append("\n\t\t\t\t\t\t\t\t\t<电子信箱地址>" + xmlObject.FF_DZXXDZ + "</电子信箱地址>");
+            sb.Append("\n\t\t\t\t\t\t\t\t\t<网址>" + xmlObject.FF_WZ + "</网址>");
+            sb.Append("\n\t\t\t\t\t\t\t\t</CI_联系>");
+            sb.Append("\n\t\t\t\t\t\t\t</联系信息>");
+            sb.Append("\n\t\t\t\t\t\t</CI_负责单位>");
+            sb.Append("\n\t\t\t\t\t</分发者联系信息>");
+            sb.Append("\n\t\t\t\t</MD_分发者>");
+            sb.Append("\n\t\t\t</分发者>");
+            sb.Append("\n\t\t</MD_分发>");
+            sb.Append("\n\t</分发信息>");
+
+            sb.Append("\n\t<MD_元数据>");
+            sb.Append("\n\t\t<日期>" + xmlObject.MD_RQ + "</日期>");
+            sb.Append("\n\t\t<联系>");
+            sb.Append("\n\t\t\t<CI负责单位>");
+            sb.Append("\n\t\t\t\t<负责单位名称>" + xmlObject.MD_FZDWMC + "</负责单位名称>");
+            sb.Append("\n\t\t\t\t<联系人>" + xmlObject.MD_LXR + "</联系人>");
+            sb.Append("\n\t\t\t\t<职责>" + xmlObject.MD_ZZ + "</职责>");
+            sb.Append("\n\t\t\t</CI负责单位>");
+            sb.Append("\n\t\t\t<CI_联系>");
+            sb.Append("\n\t\t\t\t<联系信息>");
+            sb.Append("\n\t\t\t\t\t<电话>" + xmlObject.MD_DH + "</电话>");
+            sb.Append("\n\t\t\t\t\t<传真>" + xmlObject.MD_CZ + "</传真>");
+            sb.Append("\n\t\t\t\t\t<通信地址>" + xmlObject.MD_TXDZ + "</通信地址>");
+            sb.Append("\n\t\t\t\t\t<邮政编码>" + xmlObject.MD_YZBM + "</邮政编码>");
+            sb.Append("\n\t\t\t\t\t<电子信箱地址>" + xmlObject.MD_DZXXDZ + "</电子信箱地址>");
+            sb.Append("\n\t\t\t\t\t<网址>" + xmlObject.MD_WZ + "</网址>");
+            sb.Append("\n\t\t\t\t</联系信息>");
+            sb.Append("\n\t\t\t</CI_联系>");
+            sb.Append("\n\t\t</联系>");
+            sb.Append("\n\t</MD_元数据>");
+            sb.Append("\n</福建省厦门市集美区基本农田永久划定成果元数据>");
+            #endregion
+            if (!File.Exists(filePath + "\\" + xmlObject.fileName))
+            {
+                StreamWriter sw = File.CreateText(filePath + "\\" + xmlObject.fileName);
+
+                string d = sb.ToString();
+                sw.WriteLine(sb.ToString());
+                sw.Close(); //关闭文件
+            }
+            return true;
+        }
+    }
+}

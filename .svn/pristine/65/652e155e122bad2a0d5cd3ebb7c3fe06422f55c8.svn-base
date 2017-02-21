@@ -1,0 +1,109 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Security.Cryptography;
+using System.IO;
+using System.Configuration;
+
+namespace XMLTranslation
+{
+    /// <summary>
+    /// 错误日志类
+    /// </summary>
+    class ErrorLog
+    {
+        #region 异常信息写入日志文件
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ex"></param>
+        /// <param name="xmlPath"></param>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        public static bool RecordExceptionToFile(Exception ex,String xmlPath,String fileName)
+        {
+            try
+            {
+                string logPath = xmlPath;
+                string logFileName ="ErrorLog";
+                if (ex.GetType().ToString() == "System.Threading.ThreadAbortException")
+                {
+                    return false;
+                }
+
+                //取得当前需要写入的日志文件名称及路径
+                string strFullPath = logPath + @"\" + logFileName+DateTime.Today.ToString("yyyyMMdd")+".log";
+
+                //取得异常信息的内容
+                string logErrorInfo = GetLogInfo(ex, fileName);
+
+                //判断当前的日志文件是否创建，如果未创建，执行创建并加入异常内容；
+                //如果已经创建则直接追加填写
+                if (!File.Exists(strFullPath))
+                {
+                    using (StreamWriter sw = File.CreateText(strFullPath))
+                    {
+                        sw.Write(logErrorInfo);
+                        sw.Flush();
+                    }
+                }
+                else
+                {
+                    using (StreamWriter sw = File.AppendText(strFullPath))
+                    {
+                        sw.Write(logErrorInfo);
+                        sw.Flush();
+                    }
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        #endregion
+
+        #region 组织异常信息字符串
+        /// <summary>
+        /// 组织异常信息字符串
+        /// </summary>
+        /// <Coder>董彦雷：2016-6-12</Coder>
+        /// <Modifier></Modifier>
+        /// <param name="ex">异常变量</param>
+        /// <returns>异常信息字符串</returns>
+        private static string GetLogInfo(Exception ex, String fileName)
+        {
+            try
+            {
+                string strNow = DateTime.Now.ToString("HH:mm:ss");
+                StringBuilder sbLog = new StringBuilder();
+
+                sbLog.Append("\r\n---------"+fileName+".xml-------------\r\n");
+                sbLog.Append(strNow);
+                sbLog.Append("\r\n\tSource:");
+                sbLog.Append(ex.Source);
+                sbLog.Append("\r\n\tMessage:");
+                sbLog.Append(ex.Message);
+                sbLog.Append("\r\n\tStackTrace:");
+                sbLog.Append(ex.StackTrace);
+
+                if (ex.InnerException != null)
+                {
+                    sbLog.Append("\r\n\tInnerException:");
+                    sbLog.Append(ex.InnerException.StackTrace);
+                }
+
+                return sbLog.ToString();
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+        #endregion
+    }
+}
